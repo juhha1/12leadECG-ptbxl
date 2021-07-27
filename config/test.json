@@ -1,0 +1,7 @@
+{
+    "model_name": "xception2d",
+    "list_kernel_size": "[(3,3)] * 16",
+    "list_strides": "[(2,2), (2,2), (2,2), (2,2), (2,2)]",
+    "act_fn": "relu",
+    "bn": true
+}
