@@ -23,7 +23,6 @@ def get_input_config():
     base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../data')
     opt = get_opt()
     # opt for base
-#     save_dir = opt.save_dir
     target_label = opt.target_label
     data_type = opt.data_type
     # opt for signal
@@ -33,8 +32,6 @@ def get_input_config():
     # opt for stft
     nperseg = opt.nperseg
     t_len = opt.t_len
-#     stretch = opt.stretch
-#     stretch_size = opt.stretch_size
     stft_scaling = opt.stft_scaling
     # opt for cwt
     width_min = opt.width_min

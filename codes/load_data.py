@@ -10,19 +10,6 @@ import matplotlib.pyplot as plt
 
 invalid_file_name = set(['12722'])
 
-# base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
-# df_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../input/physionet.org/files/ptb-xl/1.0.1')
-
-# df = pd.read_csv(os.path.join(df_dir, 'ptbxl_database.csv'))
-# df['scp_codes'] = df['scp_codes'].apply(lambda x: ast.literal_eval(x))
-# df['label'] = df['scp_codes'].apply(lambda x: set(x.keys()))
-# df_scp = pd.read_csv(os.path.join(df_dir, 'scp_statements.csv'))
-# df_scp.index = df_scp['Unnamed: 0'].values
-# df_scp = df_scp.iloc[:,1:]
-# df_scp['diagnostic'] = [idx_code if val == 1 else None for idx_code, val in zip(df_scp.index, df_scp['diagnostic'].values)]
-# df_scp['all'] = df_scp.index
-
-
 # helper normalization functions
 def standard_normalization(sig):
     if len(sig.shape) > 1:
@@ -105,13 +92,7 @@ class STFTDataset(SignalDataset):
         self.nperseg = nperseg * upsampling_factor
         self.t_len = t_len
         self.noverlap = int(self.nperseg - ((self.fs * 10) / self.t_len))
-#         self.stretch = stretch
-#         self.stretch_size = stretch_size
         self.scaling = scaling
-#         if stretch:
-#             self.stft_shape = (12, stretch_size, int(np.ceil(self.fs * 10 / (self.nperseg - self.noverlap)) + 1))
-#         else:
-#             self.stft_shape = (12, 30, int(np.ceil(self.fs * 10 / (self.nperseg - self.noverlap)) + 1))
     def __getitem__(self, idx):
         file = self.files[idx]
         label = self.labels_encoded[idx]
@@ -119,18 +100,12 @@ class STFTDataset(SignalDataset):
         return stft, label.astype(np.float32)
     def get_stft(self, file):
         sig = self.load_sig(file)
-#         output = np.empty(self.stft_shape, dtype = np.float32)
         output = []
         for idx, s in enumerate(sig):
             f,t,Zxx = scipy.signal.stft(s, fs = self.fs, nperseg = self.nperseg, noverlap = self.noverlap, return_onesided = True)
             Zxx = abs(Zxx) + 1e-10
             Zxx = np.log(Zxx ** 2)
             output.append(Zxx)
-#             Zxx = Zxx[:30]
-#             if self.stretch:
-#                 output[idx] = scipy.signal.resample(Zxx, self.stretch_size)
-#             else:
-#                 output[idx] = Zxx
         output = np.array(output).astype(np.float32)
         if self.scaling is not None:
             output = self.scaling(output)
@@ -210,31 +185,6 @@ class CWTDataset(SignalDataset):
             output = self.scaling(output)
         return output
 
-# class PredefinedDataset(torch.utils.data.Dataset):
-#     def __init__(self,
-#                  data_dir,
-#                  df = df,
-#                  target_label = 'diagnostic', 
-#                 ):
-#         assert target_label in ['diagnostic', 'form', 'rhythm', 'diagnostic_class', 'diagnostic_subclass', 'all'], f"target_label should be one of (diagnostic, form, rhythm, diagnostic_class, diagnostic_subclass, all), but given target_label is {target_label}"
-#         data_dir = os.path.join(base_dir, 'data', data_dir)
-#         self.files = [os.path.join(data_dir, f'{fname}.npy') for fname in df[self.target_col].values]
-#         # generating labels
-#         dict_label = df_scp[df_scp[target_label].isnull() == False][target_label].to_dict()
-#         labels = df['label'].apply(lambda x: [dict_label.get(i) for i in x if i in dict_label]).values
-#         self.mlb = MultiLabelBinarizer().fit(labels)
-#         self.labels = labels
-#         self.labels_encoded = self.mlb.transform(labels)
-#     def __len__(self):
-#         return len(self.files)
-#     def __getitem__(self, idx):
-#         file = self.files[idx]
-#         label = self.labels_encoded[idx]
-#         data = self.load_data(file)
-#         return data, label
-#     def load_data(self, file):
-#         return np.load(file)
-
 def get_dataset(config, df, df_scp, base_dir):
     if isinstance(config, dict) == False:
         config = vars(config)
@@ -258,8 +208,6 @@ def get_dataset(config, df, df_scp, base_dir):
     elif data_type == 'stft':
         # stft configurations
         stft_scaling = config['stft_scaling']
-#         stretch = config['stretch']
-#         stretch_size = config['stretch_size']    
         # Scaling configs - stft
         if stft_scaling == 'standard':
             stft_scaling = standard_normalization
@@ -271,8 +219,6 @@ def get_dataset(config, df, df_scp, base_dir):
     elif data_type == 'stft_image':
         # stft configurations
         stft_scaling = config['stft_scaling']
-#         stretch = config['stretch']
-#         stretch_size = config['stretch_size']    
         # Scaling configs - stft
         if stft_scaling == 'standard':
             stft_scaling = standard_normalization
